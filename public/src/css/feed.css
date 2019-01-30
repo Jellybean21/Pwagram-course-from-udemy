@@ -29,3 +29,8 @@
   display: block;
   margin: 10px auto;
 }
+
+.mrmlauto {
+  margin-right : auto;
+  margin-left : auto;
+}
