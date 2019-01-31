@@ -32,6 +32,7 @@ function openCreatePostModal() {
   }
 }
 */
+}
 function closeCreatePostModal() {
   createPostArea.style.display = 'none';
 }
@@ -55,23 +56,23 @@ function clearCards(){
     sharedMomentsArea.removeChild(sharedMomentsArea.lastChild);
   }
 }
-function createCard(){
+function createCard(data){
   var cardWrapper = document.createElement('div');
   cardWrapper.className = 'shared-moment-card mdl-card mdl-shadow--2dp mrmlauto';
   var cardTitle = document.createElement('div');
   cardTitle.className = 'mdl-card__title';
-  cardTitle.style.backgroundImage = 'url("/src/images/sf-boat.jpg")';
+  cardTitle.style.backgroundImage = 'url(' + data.image + ')'; // accesing the image from the database.
   cardTitle.style.backgroundSize = 'cover';
   cardTitle.style.height = '180px';
   cardWrapper.appendChild(cardTitle);
   var cardTitleTextElement = document.createElement('h2');
   cardTitleTextElement.style.color = 'white';
   cardTitleTextElement.className = 'mdl-card__title-text';
-  cardTitleTextElement.textContent = 'In San Francisco trip';
+  cardTitleTextElement.textContent = data.title;
   cardTitle.appendChild(cardTitleTextElement);
   var cardSupportingText = document.createElement('div');
   cardSupportingText.className = 'mdl-card__supporting-text';
-  cardSupportingText.textContent = 'In San Francisco';
+  cardSupportingText.textContent = data.location;
   cardSupportingText.style.textAlign = 'center';
   //var cardSaveButton = document.createElement('button');
   //cardSaveButton.textContent = 'Save';
@@ -81,31 +82,34 @@ function createCard(){
   componentHandler.upgradeElement(cardWrapper);
   sharedMomentsArea.appendChild(cardWrapper);
 }
-let url = 'https://httpbin.org/post';
+
+function updateUI(data){ // we expect to get the data from database
+  clearCards();
+  for(var i = 0; i < data.length; i++){
+    createCard(data[i]);
+  }
+}
+
+let url = 'https://patagram-b2193.firebaseio.com/post.json'; // addind .json at the end because it's a simple requierement from firebase to target the real API endpoint.
 let netWorkDataReceived = false;
 
 
-fetch(url, {
-  method: 'POST',
-  headers: {
-    'Content-type': 'application/json',
-    'Accept': 'application/json',
-  },
-  body: JSON.stringify({
-    message: 'Some messages'
-  })
+fetch(url)
+  .then(function(res){
+    return res.json();
 })
-.then(function(res){
-  return res.json();
-})
-.then(function(data){
-  netWorkDataReceived = true; // set true when we get the data from web, with that the only one to use the cache response
-  console.log('From web', data);// It's kind of a race , one could be faster than the other one
-  clearCards();
-  createCard();
-})
+  /*.then(function(data){
+    netWorkDataReceived = true; // set true when we get the data from web, with that the only one to use the cache response
+    console.log('From web', data);// It's kind of a race , one could be faster than the other one
+    let dataArray = [];
+    for ( var key in data){
+      dataArray.push(data[key]) // we push all the values of keys value pairs into an array, this array will hold the objects and his properties.
+    }
+    updateUI(dataArray);
+});*/
 
 
+/*
 if ('caches' in window){
   caches.match(url)
   .then(function(response){
@@ -115,9 +119,22 @@ if ('caches' in window){
   }).then(function(data){
     console.log('From cache', data);
     if (!netWorkDataReceived){
-      clearCards();
-      createCard();
+    let dataArray = [];
+    for (var key in data){
+      dataArray.push(data[key]);
+    }
+    updateUI(dataArray);
     }
 
   });
+}
+*/
+if ('indexedDB' in window ){
+  readAllData('posts')
+    .then(function(data){
+      if (!netWorkDataReceived){
+        console.log('From cache: ', data);
+        updateUI(data);
+      }
+    });
 }
