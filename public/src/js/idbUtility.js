@@ -5,7 +5,9 @@ let dbPromise = idb.open('posts-store', 1, function(db){// opening indexed db wi
     db.createObjectStore('posts', { keyPath: 'id'});   //this function take two arguments : the name of the store.
                                                      //the second arguments : define an object , in this one we define a primary key of each object will be stored in that object store.
   }                                                 // id is set as the primary key for posts.
-
+  if(!db.objectStoreNames.contains('sync-posts')){
+    db.createObjectStore('sync-posts', {keyPath: 'id'});
+  }
 });
 
 function writeData(st, data){ // st for the store and data for data stored

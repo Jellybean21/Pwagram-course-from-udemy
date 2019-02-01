@@ -1,7 +1,7 @@
 importScripts('/src/js/idb.js');
 importScripts('/src/js/idbUtility.js');
 
-var CACHE_STATIC_NAME = 'static-v20';
+var CACHE_STATIC_NAME = 'static-v29';
 var CACHE_DYNAMIC_NAME = 'dynamic-v2';
 var STATIC_FILES = [
   '/',
@@ -86,9 +86,9 @@ self.addEventListener('fetch', function (event) {
           .then(function (data) {
             for (var key in data) {
               writeData('posts', data[key])
-                .then(function() {
-                  deleteItemFromData('posts', data[key].id);
-                });
+                // .then(function() {
+                //   deleteItemFromData('posts', data[key].id);
+                // });
             }
           });
         return res;
@@ -183,3 +183,42 @@ self.addEventListener('fetch', function (event) {
 //     fetch(event.request)
 //   );
 // });
+self.addEventListener('sync', function(event){
+  //this triggered when network is back
+  console.log('[Service Worker] Background syncing', event);
+  //we check if the syn new post exists
+  //if this is the case we want to do somthing specific
+  // if we have different tags or different syncro tasks we could use a switch with case statement to do different things
+  if(event.tag === 'sync-new-posts'){
+    console.log('[SERVICE WORKER] Syncing new posts');
+    event.waitUntil(
+      readAllData('sync-posts')
+      .then(function(data){
+        for (var dt of data) {
+          fetch('https://us-central1-patagram-b2193.cloudfunctions.net/storePostData', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json',
+                       'Accept': 'application/json'} ,
+              body: JSON.stringify({
+              id: dt,
+              title: dt.title,
+              location: dt.location,
+              image: 'https://firebasestorage.googleapis.com/v0/b/patagram-b2193.appspot.com/o/sf-boat.jpg?alt=media&token=5a7f4de8-83e6-4c3a-9c94-a92aab337811'
+            })
+          })
+          .then(function(res){
+            console.log('Data sent', res);
+            if (res.ok){
+              deleteItemFromData('sync-posts', dt.id);
+            }
+          })
+          .catch(function(err){
+            console.log('Error while sending data', err);
+          })
+        }
+
+      })
+    )
+
+  }
+})
