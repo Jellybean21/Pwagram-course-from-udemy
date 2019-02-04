@@ -1,7 +1,7 @@
 importScripts('/src/js/idb.js');
 importScripts('/src/js/idbUtility.js');
 
-var CACHE_STATIC_NAME = 'static-v29';
+var CACHE_STATIC_NAME = 'static-v36';
 var CACHE_DYNAMIC_NAME = 'dynamic-v2';
 var STATIC_FILES = [
   '/',
@@ -200,7 +200,7 @@ self.addEventListener('sync', function(event){
             headers: {'Content-Type': 'application/json',
                        'Accept': 'application/json'} ,
               body: JSON.stringify({
-              id: dt,
+              id: dt.id,
               title: dt.title,
               location: dt.location,
               image: 'https://firebasestorage.googleapis.com/v0/b/patagram-b2193.appspot.com/o/sf-boat.jpg?alt=media&token=5a7f4de8-83e6-4c3a-9c94-a92aab337811'
@@ -209,7 +209,12 @@ self.addEventListener('sync', function(event){
           .then(function(res){
             console.log('Data sent', res);
             if (res.ok){
-              deleteItemFromData('sync-posts', dt.id);
+              res.json()
+              .then(function(resData){
+                deleteItemFromData('sync-posts', resData.id);
+                console.log(resData.id);
+              })
+
             }
           })
           .catch(function(err){
@@ -221,4 +226,24 @@ self.addEventListener('sync', function(event){
     )
 
   }
+})
+//Event to interact with notification , this is a feature mobile so only serviceWorker can handle this
+self.addEventListener('notificationclick', function(event){
+  let notification = event.notification;
+  let action = event.action;
+
+  console.log(notification);
+  //If the user click on the confirm button with the confirm action
+  if(action === 'confirm'){
+    console.log('Confirm was chosen');
+    notification.close();// automaticaly close the notification after action.
+  }else{
+    console.log(action);
+    notification.close();
+  }
+})
+//Event on notification close
+self.addEventListener('notificationclose', function(event){
+  console.log('Notification was close', event);
+  let notification = event.notification;
 })

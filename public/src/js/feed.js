@@ -102,7 +102,7 @@ function updateUI(data){ // we expect to get the data from database
   }
 }
 
-let url = 'https://us-central1-patagram-b2193.cloudfunctions.net/storePostData'; // addind .json at the end because it's a simple requierement from firebase to target the real API endpoint.
+let url = 'https://patagram-b2193.firebaseio.com/post.json'; // addind .json at the end because it's a simple requierement from firebase to target the real API endpoint.
 let netWorkDataReceived = false;
 
 
@@ -152,7 +152,7 @@ if ('indexedDB' in window ){
 }
 // function used to send data directly to the data base w/o passing by the indexedDB
 function sendData(){
-  fetch(' https://us-central1-patagram-b2193.cloudfunctions.net/storePostData', {
+  fetch('https://us-central1-patagram-b2193.cloudfunctions.net/storePostData', {
     method: 'POST',
     hearders: {'Content-Type': 'application/json',
                'Accept': 'application/json'} ,

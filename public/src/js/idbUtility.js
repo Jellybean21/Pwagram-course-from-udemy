@@ -1,8 +1,8 @@
 let dbPromise = idb.open('posts-store', 1, function(db){// opening indexed db with the script we imported (idb.js) and give it a name in first parameter , as a second parameter the version of this db , and third parameter a function.
   //this function can't be avoided , its executed when ever the database was created and we get back an object wich allow us accesing the database.
   //we create a new object store , it's likely table.
-  if(! db.objectStoreNames.contains('posts')){
-    db.createObjectStore('posts', { keyPath: 'id'});   //this function take two arguments : the name of the store.
+  if(! db.objectStoreNames.contains('post')){
+    db.createObjectStore('post', { keyPath: 'id'});   //this function take two arguments : the name of the store.
                                                      //the second arguments : define an object , in this one we define a primary key of each object will be stored in that object store.
   }                                                 // id is set as the primary key for posts.
   if(!db.objectStoreNames.contains('sync-posts')){
@@ -59,4 +59,18 @@ function deleteItemFromData(st, id) {// it takes two arguments , the store and t
     .then(function() {
       console.log('Item deleted!');
     });
+}
+function urlBase64ToUint8Array(base64string){
+  var padding = '='.repeat((4-base64String.length % 4) % 4);
+  var base64 = (base64String + padding)
+  .replace(/\-/g, '+')
+  .replace(/_/g, '/');
+
+  let rawData = window.atob(base64);
+  let outputArray = new Uint8Array(rawData.length);
+
+  for (let i = 0; i < rawData.length; i++){
+    outputArray[i] = rawData.charCodeAt(i);
+  }
+  return outputArray;
 }

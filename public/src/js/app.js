@@ -1,5 +1,5 @@
 let defferedPrompt;
-
+let enableNotificationsButtons = document.querySelectorAll('.enable-notifications')
 if(!window.Promise ){ // that means my browser natively support promises, but if not the case add exclamation mark so i can set this on my own
   window.Promise = Promise;
 }
@@ -20,3 +20,102 @@ window.addEventListener('beforeinstallprompt', (e) => {
   defferedPrompt = event;
   return false;
 });
+//display a notification
+function displayConfirmNotification(){
+  if('serviceWorker' in navigator){
+    let options = {
+      body: 'Welcome to our new subscibe notifications, enjoy it , have a nice day',
+      icon: 'src/images/icons/app-icon-96x96.png',
+      image: 'src/images/sf-boat.jpg',
+      dir : 'ltr', // direction of the text // in that case : left to right
+      lang: 'en-US', //BCP 47 language
+      vibrate: [100, 50, 200],
+      badge:  '/src/images/icons/app-icon-96x96.png',
+      tag: 'confirm-notification',
+      renotify: true, // combined with tag its allows you to be alert by a new notification
+      actions: [
+        {action: 'confirm', title: 'Ok', icon: 'src/images/icons/app-icon-96x96.png'}, // buttons displayed next to the notification.
+        {action: 'cancel', title: 'Cancel', icon: 'src/images/icons/app-icon-96x96.png'}
+      ]
+    };
+    navigator.serviceWorker.ready
+      .then(function(swreg){ // swreg for serviceWorker registration
+        swreg.showNotification('Successfully subscribed (FROM SW)', options) // this is the serviceWorker interface to show notifications. It take same arguments as new Notification
+      })
+  }
+
+function configurePushSub(){
+  if(!('serviceWorker' in navigator)){
+    return;
+  }
+
+  var reg ;
+  navigator.serviceWorker.ready
+  .then(function(swreg){
+    reg = swreg
+    return swreg.pushManager.getSubscription()// getSubscription is a method wich return any existing subscription
+    //our own back-end server hhas the only valid source to send our push messages
+    //the vapid key is a good solution for secure push notifications , it use two keys , one public and one private , they works together.
+    //vapid key use Jason web tokens to carry identifying and are simply converted to base 64 strings
+  })
+  .then(function(sub){
+    if(sub === null){
+      //Create a new subscription
+      let vapidPublicKey = 'BGaV7OlvBu7FWeARC8bOzkZ7Bfo3gpaRtf6qLwAhCej3UsdQLbtmGZeM2IYgAVunXoYLXKH4iZSgIxMdW_QeC3M';
+      let convertedVapidPublicKey = urlBase64ToUint8Array(vapidPublicKey);
+      reg.pushManager.subscribe({
+        userVisibilityOnly: true, // that push notification is only visible to this user
+        applicationServerKey: convertedVapidPublicKey
+      });
+    }else{
+      //We have a subscription
+    }
+  })
+  .then(function(newSub){
+    //this is what e want to pass to the service
+    return fetch('https://patagram-b2193.firebaseio.com/subscriptions.json', {
+      method: 'POST',
+      headers: {
+        'Content-type': 'application/json',
+        'Accept': 'application/json'
+      },
+      body: JSON.stringify(newSub)
+    })
+  })
+  .then(function(res){
+    if(res.ok){
+        displayConfirmNotification();
+    }
+
+  })
+  .catch(function(err){
+    console.log(err);
+  })
+
+}
+
+}
+//ask permission for enabling notifications
+function askForPermissionNotification(){
+  Notification.requestPermission(function(result){
+    console.log('USer choice: ', result);
+    if( result !== 'granted'){
+      console.log('No notification permission granted')
+    }else{
+      displayConfirmNotification();
+      console.log('Permission notification is displayed');
+      configurePushSub();
+      //displayConfirmNotification();
+
+    }
+  })
+}
+// check if notifications API is supported by browers
+if('Notification' in window && 'serviceWorker' in navigator){
+
+  for (var i = 0; i < enableNotificationsButtons.length ; i++){
+      enableNotificationsButtons[i].style.display = 'inline-block';
+      enableNotificationsButtons[i].addEventListener('click', askForPermissionNotification)
+  }
+
+}
