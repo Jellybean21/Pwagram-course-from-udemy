@@ -1,16 +1,63 @@
-var shareImageButton = document.querySelector('#share-image-button');
-var createPostArea = document.querySelector('#create-post');
-var closeCreatePostModalButton = document.querySelector('#close-create-post-modal-btn');
-var sharedMomentsArea = document.querySelector('#shared-moments');
-var form = document.querySelector('form');
-var titleInput = document.querySelector('#title');
-var locationInput = document.querySelector('#location');
+let shareImageButton = document.querySelector('#share-image-button');
+let createPostArea = document.querySelector('#create-post');
+let closeCreatePostModalButton = document.querySelector('#close-create-post-modal-btn');
+let sharedMomentsArea = document.querySelector('#shared-moments');
+let form = document.querySelector('form');
+let titleInput = document.querySelector('#title');
+let locationInput = document.querySelector('#location');
+let videoPlayer = document.querySelector('#player');
+let canvas = document.querySelector('#canvas');
+let captureButton = document.querySelector('#capture-btn');
+let imagePicker = document.querySelector('#image-picker');
+let imagePickerArea = document.querySelector('#pick-image')
+let picture;
+
+
+function initializeMedia(){
+  //check if media devices are present
+  if (!('mediaDevices' in navigator)) {
+    navigator.mediaDevices = {};
+    }
+    if(!('getUserMedia' in navigator.mediaDevices)){
+      navigator.mediaDevices.getUserMedia = function(constrains){
+          //older browser have their own native implementations
+        let getUserMedia = navigator.webkitGetUserMedia || navigator.mozGetUserMedia
+
+        if (!getUserMedia){
+          return Promise.reject(new Error('getUserMedia is not implemented'))
+        }
+        return new Promise(function(resolve, reject){
+          getUserMedia.call(navigator, constrains, resolve, reject)
+        })
+      }
+    }
+    navigator.mediaDevices.getUserMedia({video: true, audio: true})
+    .then(function(stream){
+      videoPlayer.srcObject = stream;
+      videoPlayer.style.display = 'block';
+    })
+    .catch(function(err){
+      imagePickerArea.style.display = 'block';
+    });
+}
+//Function for the button capture when you want to capture. The canvas can capture the event.
+captureButton.addEventListener('click', function(event){
+  canvas.style.display = 'block';
+  videoPlayer.style.display = 'none';
+  captureButton.style.display = 'none';
+  let context = canvas.getContext('2d');
+  context.drawImage(videoPlayer, 0, 0,canvas.width, videoPlayer.videoHeight / (videoPlayer.videoWidth /canvas.width ));
+  videoPlayer.srcObject.getVideoTracks().forEach(function(track){ //it gives us access to the running video stream on the element
+    track.stop();
+  });
+});
 
 
 function openCreatePostModal() {
   createPostArea.style.display = 'block';
   setTimeout(function(){
       createPostArea.style.transform = 'translateY(0)';
+      initializeMedia();
   }, 1);
 
   // setTimeout(function(){
@@ -37,7 +84,7 @@ function openCreatePostModal() {
   /*if ('serviceWorker' in navigator){
     navigator.serviceWorker.getRegistrations()
     .then(function (registrations) {
-      for (var i = 0; i < registrations.length; i++){
+      for (let i = 0; i < registrations.length; i++){
         registrations[i].unregister();
       }
     })
@@ -47,7 +94,9 @@ function openCreatePostModal() {
 }
 function closeCreatePostModal() {
   createPostArea.style.transform = 'translateY(100vh)';
-
+  imagePickerArea.style.display = 'none';
+  videoPlayer.style.display = 'none';
+  canvasElement.style.display = 'none';
 }
 
 shareImageButton.addEventListener('click', openCreatePostModal);
@@ -70,23 +119,23 @@ function clearCards(){
   }
 }
 function createCard(data){
-  var cardWrapper = document.createElement('div');
+  let cardWrapper = document.createElement('div');
   cardWrapper.className = 'shared-moment-card mdl-card mdl-shadow--2dp mrmlauto';
-  var cardTitle = document.createElement('div');
+  let cardTitle = document.createElement('div');
   cardTitle.className = 'mdl-card__title';
   cardTitle.style.backgroundImage = 'url(' + data.image + ')'; // accesing the image from the database.
   cardTitle.style.backgroundSize = 'cover';
   cardWrapper.appendChild(cardTitle);
-  var cardTitleTextElement = document.createElement('h2');
+  let cardTitleTextElement = document.createElement('h2');
   cardTitleTextElement.style.color = 'white';
   cardTitleTextElement.className = 'mdl-card__title-text';
   cardTitleTextElement.textContent = data.title;
   cardTitle.appendChild(cardTitleTextElement);
-  var cardSupportingText = document.createElement('div');
+  let cardSupportingText = document.createElement('div');
   cardSupportingText.className = 'mdl-card__supporting-text';
   cardSupportingText.textContent = data.location;
   cardSupportingText.style.textAlign = 'center';
-  //var cardSaveButton = document.createElement('button');
+  //let cardSaveButton = document.createElement('button');
   //cardSaveButton.textContent = 'Save';
   //cardSaveButton.addEventListener('click', onClickSavedButton);
   //cardSupportingText.appendChild(cardSaveButton);
@@ -97,7 +146,7 @@ function createCard(data){
 
 function updateUI(data){ // we expect to get the data from database
   clearCards();
-  for(var i = 0; i < data.length; i++){
+  for(let i = 0; i < data.length; i++){
     createCard(data[i]);
   }
 }
@@ -114,7 +163,7 @@ fetch(url)
     netWorkDataReceived = true; // set true when we get the data from web, with that the only one to use the cache response
     console.log('From web', data);// It's kind of a race , one could be faster than the other one
     let dataArray = [];
-    for ( var key in data){
+    for ( let key in data){
       dataArray.push(data[key]) // we push all the values of keys value pairs into an array, this array will hold the objects and his properties.
     }
     updateUI(dataArray);
@@ -132,7 +181,7 @@ if ('caches' in window){
     console.log('From cache', data);
     if (!netWorkDataReceived){
     let dataArray = [];
-    for (var key in data){
+    for (let key in data){
       dataArray.push(data[key]);
     }
     updateUI(dataArray);

@@ -21,7 +21,29 @@ exports.storePostData = functions.https.onRequest(function(request, response){
     })
     .then(function(){
       //put a valid mail adress as first argument , and your public et privat key as second and third arguments
-      webpush.setVapidDetails('mailto:dave_dnb21@hotmail.fr', 'BGaV7OlvBu7FWeARC8bOzkZ7Bfo3gpaRtf6qLwAhCej3UsdQLbtmGZeM2IYgAVunXoYLXKH4iZSgIxMdW_QeC3M', '')
+      webpush.setVapidDetails('mailto:dave_dnb21@hotmail.fr', 'BEtghSwe2phhdR37gL2cdznuj9vPLdds1-3SxIqafgaTp_TfmNZQDeZXmK-wEDJ5dSLHvmBMRVCWnkCrgSsRqH0', 'OOu_gyRGc_iDM2WtYwQPM2BNm4K-xhyWRvZTmCjbLkE')
+      return admin.database().ref('subscriptions').once('value')
+
+    })
+    .then(function(subscriptions){
+      subscriptions.forEach(function(sub){
+        //firebase will make loop in every keys in the databse and retrieve nested informations in each keys.
+        let pushConfig = {
+          endpoint: sub.val().endpoint, // val() is a method to extract the real javascript value
+          keys : {
+            auth: sub.val().keys.auth,
+            p256dh: sub.val().keys.p256dh
+          }
+        }
+        webpush.sendNotification(pushConfig, JSON.stringify({
+          title:    'New post',
+          content:  'New post added',
+          openUrl:  '/help'
+        }))// first argument the object with datas to send push to some endpoints, and as second argument the payload
+        .catch(function(error){
+          console.log(error);
+        })
+      })
       response.status(201).json({message: 'Data stored', id: request.body.id });
     })
     .catch(function(err){

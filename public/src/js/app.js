@@ -43,58 +43,53 @@ function displayConfirmNotification(){
         swreg.showNotification('Successfully subscribed (FROM SW)', options) // this is the serviceWorker interface to show notifications. It take same arguments as new Notification
       })
   }
+}
 
-function configurePushSub(){
-  if(!('serviceWorker' in navigator)){
+function configurePushSub() {
+  if (!('serviceWorker' in navigator)) {
     return;
   }
 
-  var reg ;
+  var reg;
   navigator.serviceWorker.ready
-  .then(function(swreg){
-    reg = swreg
-    return swreg.pushManager.getSubscription()// getSubscription is a method wich return any existing subscription
-    //our own back-end server hhas the only valid source to send our push messages
-    //the vapid key is a good solution for secure push notifications , it use two keys , one public and one private , they works together.
-    //vapid key use Jason web tokens to carry identifying and are simply converted to base 64 strings
-  })
-  .then(function(sub){
-    if(sub === null){
-      //Create a new subscription
-      let vapidPublicKey = 'BGaV7OlvBu7FWeARC8bOzkZ7Bfo3gpaRtf6qLwAhCej3UsdQLbtmGZeM2IYgAVunXoYLXKH4iZSgIxMdW_QeC3M';
-      let convertedVapidPublicKey = urlBase64ToUint8Array(vapidPublicKey);
-      reg.pushManager.subscribe({
-        userVisibilityOnly: true, // that push notification is only visible to this user
-        applicationServerKey: convertedVapidPublicKey
-      });
-    }else{
-      //We have a subscription
-    }
-  })
-  .then(function(newSub){
-    //this is what e want to pass to the service
-    return fetch('https://patagram-b2193.firebaseio.com/subscriptions.json', {
-      method: 'POST',
-      headers: {
-        'Content-type': 'application/json',
-        'Accept': 'application/json'
-      },
-      body: JSON.stringify(newSub)
+    .then(function(swreg) {
+      reg = swreg;
+      return swreg.pushManager.getSubscription();
     })
-  })
-  .then(function(res){
-    if(res.ok){
+    .then(function(sub) {
+      if (sub === null) {
+        // Create a new subscription
+        var vapidPublicKey = 'BEtghSwe2phhdR37gL2cdznuj9vPLdds1-3SxIqafgaTp_TfmNZQDeZXmK-wEDJ5dSLHvmBMRVCWnkCrgSsRqH0';
+        var convertedVapidPublicKey = urlBase64ToUint8Array(vapidPublicKey);
+        return reg.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: convertedVapidPublicKey
+        });
+      } else {
+        // We have a subscription
+      }
+    })
+    .then(function(newSub) {
+      return fetch('https://patagram-b2193.firebaseio.com/subscriptions.json', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify(newSub)
+      })
+    })
+    .then(function(res) {
+      if (res.ok) {
         displayConfirmNotification();
-    }
-
-  })
-  .catch(function(err){
-    console.log(err);
-  })
-
+      }
+    })
+    .catch(function(err) {
+      console.log(err);
+    });
 }
 
-}
+
 //ask permission for enabling notifications
 function askForPermissionNotification(){
   Notification.requestPermission(function(result){
@@ -102,7 +97,7 @@ function askForPermissionNotification(){
     if( result !== 'granted'){
       console.log('No notification permission granted')
     }else{
-      displayConfirmNotification();
+
       console.log('Permission notification is displayed');
       configurePushSub();
       //displayConfirmNotification();

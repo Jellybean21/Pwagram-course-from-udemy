@@ -1,7 +1,7 @@
 importScripts('/src/js/idb.js');
 importScripts('/src/js/idbUtility.js');
 
-var CACHE_STATIC_NAME = 'static-v36';
+var CACHE_STATIC_NAME = 'static-v20';
 var CACHE_DYNAMIC_NAME = 'dynamic-v2';
 var STATIC_FILES = [
   '/',
@@ -238,12 +238,55 @@ self.addEventListener('notificationclick', function(event){
     console.log('Confirm was chosen');
     notification.close();// automaticaly close the notification after action.
   }else{
-    console.log(action);
-    notification.close();
+    event.waitUntil(
+      clients.matchAll()
+      .then(function(cliets){
+        let client = cliets.find(function(c){
+          return c.visibilityState === 'visible';
+        })
+        if(client !== undefined){
+          client.navigate(notification.data.url);
+          client.focus();
+          //this should ensure to load our application in user tab when he click on notification
+        }else{
+          //it will open a tab if the app is not open on a window
+          clients.openWindow(notification.data.url);
+        }
+        console.log(action);
+        notification.close();
+      })
+    )
+
   }
 })
 //Event on notification close
 self.addEventListener('notificationclose', function(event){
   console.log('Notification was close', event);
   let notification = event.notification;
+})
+
+//Now we can listen the push message incoming
+
+self.addEventListener('push', function(event){
+  //keep in mind if you unregister the service worker it will not work anymore
+  console.log('Push Notification received', event);
+
+  let data = {title:'New!', content:'New content overcome', openUrl: '/'}
+  if (event.data){
+    data = JSON.parse(event.data.text());
+  }
+  let options = {
+    body: data.content,
+    icon: 'src/images/icons/app-icon-96x96.png',
+    badge: 'src/images/icons/app-icon-96x96.png',
+    data: {
+      url: data.openUrl
+    }
+  }
+  console.log(options.data.url)
+  event.waitUntil(
+  self.registration.showNotification(data.title, options)
+
+  )
+
 })
