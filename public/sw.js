@@ -1,7 +1,7 @@
 importScripts('/src/js/idb.js');
 importScripts('/src/js/idbUtility.js');
 
-var CACHE_STATIC_NAME = 'static-v20';
+var CACHE_STATIC_NAME = 'static-v305';
 var CACHE_DYNAMIC_NAME = 'dynamic-v2';
 var STATIC_FILES = [
   '/',
@@ -195,6 +195,7 @@ self.addEventListener('sync', function(event){
       readAllData('sync-posts')
       .then(function(data){
         for (var dt of data) {
+          console.log(dt);
           fetch('https://us-central1-patagram-b2193.cloudfunctions.net/storePostData', {
             method: 'POST',
             headers: {'Content-Type': 'application/json',
@@ -229,14 +230,37 @@ self.addEventListener('sync', function(event){
 })
 //Event to interact with notification , this is a feature mobile so only serviceWorker can handle this
 self.addEventListener('notificationclick', function(event){
+  console.log(event);
+
   let notification = event.notification;
   let action = event.action;
 
   console.log(notification);
+
   //If the user click on the confirm button with the confirm action
   if(action === 'confirm'){
-    console.log('Confirm was chosen');
-    notification.close();// automaticaly close the notification after action.
+    return fetch('https://patagram-b2193.firebaseio.com/confirmations.json', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      },
+      body: JSON.stringify({
+        action: action,
+
+      })
+    })
+    .then(function(res){
+      if(res.ok){
+        console.log('Confirm was chosen');
+        notification.close();// automaticaly close the notification after action.
+      }
+    })
+    .catch(function(error){
+      console.log(error)
+    })
+
+
   }else{
     event.waitUntil(
       clients.matchAll()
@@ -274,14 +298,20 @@ self.addEventListener('push', function(event){
   let data = {title:'New!', content:'New content overcome', openUrl: '/'}
   if (event.data){
     data = JSON.parse(event.data.text());
+    console.log(data);
   }
   let options = {
     body: data.content,
     icon: 'src/images/icons/app-icon-96x96.png',
     badge: 'src/images/icons/app-icon-96x96.png',
     data: {
+      customID: data.customID,
       url: data.openUrl
-    }
+    },
+    actions: [
+      {action: 'confirm', title: 'Ok', icon: 'src/images/icons/app-icon-96x96.png'}, // buttons displayed next to the notification.
+      {action: 'cancel', title: 'Cancel', icon: 'src/images/icons/app-icon-96x96.png'}
+    ]
   }
   console.log(options.data.url)
   event.waitUntil(

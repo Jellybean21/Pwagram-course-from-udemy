@@ -17,7 +17,8 @@ exports.storePostData = functions.https.onRequest(function(request, response){
       id: request.body.id,
       title: request.body.title,
       location: request.body.location,
-      image: request.body.image
+      image: request.body.image,
+
     })
     .then(function(){
       //put a valid mail adress as first argument , and your public et privat key as second and third arguments
@@ -38,7 +39,8 @@ exports.storePostData = functions.https.onRequest(function(request, response){
         webpush.sendNotification(pushConfig, JSON.stringify({
           title:    'New post',
           content:  'New post added',
-          openUrl:  '/help'
+          openUrl:  '/help',
+          customID: 'liuytredsxcvbn,jhytredcfbnklmoiuytrezsrtyuj'
         }))// first argument the object with datas to send push to some endpoints, and as second argument the payload
         .catch(function(error){
           console.log(error);

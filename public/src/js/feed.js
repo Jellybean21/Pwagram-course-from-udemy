@@ -96,7 +96,7 @@ function closeCreatePostModal() {
   createPostArea.style.transform = 'translateY(100vh)';
   imagePickerArea.style.display = 'none';
   videoPlayer.style.display = 'none';
-  canvasElement.style.display = 'none';
+  canvas.style.display = 'none';
 }
 
 shareImageButton.addEventListener('click', openCreatePostModal);
