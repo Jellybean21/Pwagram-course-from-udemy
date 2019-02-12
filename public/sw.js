@@ -1,13 +1,14 @@
 importScripts('/src/js/idb.js');
 importScripts('/src/js/idbUtility.js');
 
-var CACHE_STATIC_NAME = 'static-v305';
-var CACHE_DYNAMIC_NAME = 'dynamic-v2';
+var CACHE_STATIC_NAME = 'static-v38';
+var CACHE_DYNAMIC_NAME = 'dynamic-v4';
 var STATIC_FILES = [
   '/',
   '/index.html',
   '/offline.html',
   '/src/js/app.js',
+  '/src/js/idbUtility.js',
   '/src/js/feed.js',
   '/src/js/idb.js',
   '/src/js/promise.js',
@@ -195,17 +196,19 @@ self.addEventListener('sync', function(event){
       readAllData('sync-posts')
       .then(function(data){
         for (var dt of data) {
+          let postData = new FormData();
+          // append data to this object below with the append method
+          postData.append('id', dt.id);
+          postData.append('title', dt.title);
+          postData.append('location', dt.location);
+          postData.append('rawLocationLat', dt.rawLocation.lat);
+          postData.append('rawLocationLng', dt.rawLocation.lng);
+          postData.append('file', dt.picture, dt.id + '.png')// the last argument is the name of the picture
           console.log(dt);
           fetch('https://us-central1-patagram-b2193.cloudfunctions.net/storePostData', {
             method: 'POST',
-            headers: {'Content-Type': 'application/json',
-                       'Accept': 'application/json'} ,
-              body: JSON.stringify({
-              id: dt.id,
-              title: dt.title,
-              location: dt.location,
-              image: 'https://firebasestorage.googleapis.com/v0/b/patagram-b2193.appspot.com/o/sf-boat.jpg?alt=media&token=5a7f4de8-83e6-4c3a-9c94-a92aab337811'
-            })
+
+              body: postData
           })
           .then(function(res){
             console.log('Data sent', res);

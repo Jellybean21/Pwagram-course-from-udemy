@@ -11,7 +11,45 @@ let captureButton = document.querySelector('#capture-btn');
 let imagePicker = document.querySelector('#image-picker');
 let imagePickerArea = document.querySelector('#pick-image')
 let picture;
+let btnLocation = document.querySelector('#location-btn');
+let locationLoader = document.querySelector('#location-loader');
+let fetchedLocation;
 
+btnLocation.addEventListener('click', function(event){
+  if(!('geolocation' in navigator)){
+    return;
+  }
+  let sawAlert = false;
+  btnLocation.style.display = 'none';
+  locationLoader.style.display = 'block';
+  // we get the current geoloc of the user
+  navigator.geolocation.getCurrentPosition(function (position){
+      btnLocation.style.display = 'inline';
+      locationLoader.style.display = 'none';
+      fetchedLocation = {lat: position.coords.latitude, lng: 0};
+      locationInput.value = 'In France';
+      locationInput.classList.add('is-focused');
+
+  }, function(err){
+      console.log(err);
+      btnLocation.style.display = 'inline';
+      locationLoader.style.display = 'none';
+      if(!sawAlert){
+        alert('Couldn\'t fetch location, please enter it manually');
+        sawAlert = true;
+      }
+      fetchedLocation = {lat:0, lng: 0};
+  }, {timeout: 1000
+
+  })
+
+});
+
+function initializeLocation(){
+  if(!('geolocation' in navigator)){
+    locationBtn.style.display = 'none';
+  }
+}
 
 function initializeMedia(){
   //check if media devices are present
@@ -50,14 +88,22 @@ captureButton.addEventListener('click', function(event){
   videoPlayer.srcObject.getVideoTracks().forEach(function(track){ //it gives us access to the running video stream on the element
     track.stop();
   });
+  picture = dataURItoBlob(canvas.toDataURL())// toDataURL is a method who returns a data URI containing the representation of the image in the format specified by the type parameter(default is PNG)
 });
 
+imagePicker.addEventListener('change', function(event){
+  picture = event.target.files[0];
+})
 
 function openCreatePostModal() {
+  setTimeout(function(){
+    createPostArea.style.transform = 'translateY(0)';
+  },1)
   createPostArea.style.display = 'block';
   setTimeout(function(){
-      createPostArea.style.transform = 'translateY(0)';
+
       initializeMedia();
+      initializeLocation();
   }, 1);
 
   // setTimeout(function(){
@@ -93,10 +139,21 @@ function openCreatePostModal() {
 */
 }
 function closeCreatePostModal() {
-  createPostArea.style.transform = 'translateY(100vh)';
+
   imagePickerArea.style.display = 'none';
   videoPlayer.style.display = 'none';
   canvas.style.display = 'none';
+  btnLocation.style.display ='inline';
+  locationLoader.style.display = 'none';
+  //stop recording when the postmodal is closed
+  if(videoPlayer.srcObject){
+    videoPlayer.srcObject.getVideoTracks().forEach(function(track){
+      track.stop();
+    })
+  }
+  setTimeout(function(){
+    createPostArea.style.transform = 'translateY(100vh)';
+  },1)
 }
 
 shareImageButton.addEventListener('click', openCreatePostModal);
@@ -201,19 +258,33 @@ if ('indexedDB' in window ){
 }
 // function used to send data directly to the data base w/o passing by the indexedDB
 function sendData(){
+  let id = new Date().toISOString();
+  let postData = new FormData();
+  console.log(picture, id + 'png');
+  // append data to this object below with the append method
+  postData.append('id', id);
+  postData.append('title', titleInput.value);
+  postData.append('location', locationInput.value);
+  postData.append('rawLocationLat', fetchedLocation.lat);
+  postData.append('rawLocationLng', fetchedLocation.lng);
+  postData.append('file', picture, id + '.png')
+
+
   fetch('https://us-central1-patagram-b2193.cloudfunctions.net/storePostData', {
     method: 'POST',
-    hearders: {'Content-Type': 'application/json',
-               'Accept': 'application/json'} ,
-      body: JSON.stringify({
+
+      body: postData
+
+      /*JSON.stringify({
       id: new Date().toISOString(),
       title: titleInput.value,
       location: locationInput.value,
       image: 'https://firebasestorage.googleapis.com/v0/b/patagram-b2193.appspot.com/o/sf-boat.jpg?alt=media&token=5a7f4de8-83e6-4c3a-9c94-a92aab337811'
-    })//JSON.stringify to turn into Json data
+    })*///JSON.stringify to turn into Json data
   })
   .then(function(res){
     console.log('Data sent', res);
+
     updateUI();
   })
 }
@@ -236,7 +307,9 @@ form.addEventListener('submit', function(event){ //the default of a submit event
       let post = {
         id: new Date().toISOString(),
         title: titleInput.value,
-        location: locationInput.value
+        location: locationInput.value,
+        picture: picture,
+        rawLocation: fetchedLocation //we would store into indexeddb
       };
       writeData('sync-posts', post)
         .then(function(){

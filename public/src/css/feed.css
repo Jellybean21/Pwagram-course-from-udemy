@@ -42,30 +42,34 @@
   /*width: 270px;*/
   width: 80%;
 }
-
+@media (max-width: 350px){
+  .shared-moment-card.mdl-card{
+    width: 100%;
+  }
+}
 @media (min-width: 600px){
   .shared-moment-card.mdl-card{
-    width: 60%
+    width: 60%;
   }
 }
 
 @media (min-width: 1000px){
   .shared-moment-card.mdl-card{
-    width: 45%
+    width: 45%;
   }
 }
 .shared-moment-card .mdl-card__title{
-  height: 200px;
+  height: 400px;
 }
 @media (min-height : 700px){
   .shared-moment-card .mdl-card__title {
-    height : 250px;
+    height : 400px;
   }
 }
 
 @media (min-height : 1000px){
   .shared-moment-card .mdl-card__title {
-    height : 300px;
+    height : 350px;
   }
 }
 #create-post video, #create-post canvas {
@@ -75,7 +79,7 @@
   margin: auto;
 }
 
-#create-post #pick-image {
+#create-post #pick-image, #create-post #location-loader {
   display: none;
 }
 
