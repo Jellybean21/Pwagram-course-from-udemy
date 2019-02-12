@@ -6,7 +6,7 @@ if(!window.Promise ){ // that means my browser natively support promises, but if
 //We register a new serviceWorker
 if('serviceWorker' in navigator) {
   navigator.serviceWorker
-  .register('/sw.js')//the register return a promise
+  .register('/service-worker.js')//the register return a promise
   .then(function(){
     console.log('ServiceWorker registered')
   }).catch(function(err){

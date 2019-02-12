@@ -13,7 +13,7 @@ let imagePickerArea = document.querySelector('#pick-image')
 let picture;
 let btnLocation = document.querySelector('#location-btn');
 let locationLoader = document.querySelector('#location-loader');
-let fetchedLocation;
+let fetchedLocation = {lat: 0, lng: 0};
 
 btnLocation.addEventListener('click', function(event){
   if(!('geolocation' in navigator)){
@@ -145,6 +145,7 @@ function closeCreatePostModal() {
   canvas.style.display = 'none';
   btnLocation.style.display ='inline';
   locationLoader.style.display = 'none';
+  captureButton.style.display = 'inline';
   //stop recording when the postmodal is closed
   if(videoPlayer.srcObject){
     videoPlayer.srcObject.getVideoTracks().forEach(function(track){
