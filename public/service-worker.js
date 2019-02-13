@@ -1,6 +1,7 @@
 importScripts('workbox-sw.prod.v2.1.3.js');
 //importing our idbutility and idb scripts to be used
-
+importScripts('src/js/idb.js');
+importScripts('src/js/idbUtility.js');
 const workboxSW = new self.WorkboxSW();
 
 //Creating anew Route with the Workbow S-W package
@@ -37,6 +38,7 @@ workboxSW.router.registerRoute(/.*(?:firebasestorage\.googleapis)\.com.*$/, work
 //second arguments takes a function , this function take an argument passed automatically by WorkBox
 //In that function we have to return a response or a promise wich eventually yields a response.
 workboxSW.router.registerRoute('https://patagram-b2193.firebaseio.com/post.json', function(arguments){
+  console.log(arguments);
   return fetch(arguments.event.request)//now event has his own request property
     .then(function (res) {
       var clonedRes = res.clone();
@@ -55,7 +57,41 @@ workboxSW.router.registerRoute('https://patagram-b2193.firebaseio.com/post.json'
       return res;
     })
 });
+workboxSW.router.registerRoute(function(routeData){
+  //we return true if its hit , we always handle every route
+  //return true;
+  //if routeData wich exposes the fetch event and if the request in that fetch event and the headers have an accept header
+  // this basicaly checking if the incoming request no matters wich url targeting if it has a header who accept text/html, a validate candidat to get offline html file.
+  // this will be true if the incoming request accepts this kind of content
+  //routeData is an object , wich has two properties , one is the fetch event and the second the url
+  return (routeData.event.request.headers.get('accept').includes('text/html'))
+}, function(arguments){
+  caches.match(arguments.event.request)
+    .then(function (response) {
+      if (response) {
+        return response;
+      } else {
+        return fetch(arguments.event.request)
+          .then(function (res) {
+            return caches.open('dynamic')
+              .then(function (cache) {
 
+                // trimCache(CACHE_DYNAMIC_NAME, 3);
+                cache.put(arguments.event.request.url, res.clone());
+                return res;
+                console.log(res);
+              })
+          })
+          .catch(function (err) {
+            console.log(err);
+            return caches.match('/offline.html')
+              .then(function (res) {
+              return res;
+              });
+          });
+      }
+    })
+});
 workboxSW.precache([
   {
     "url": "404.html",
@@ -79,7 +115,7 @@ workboxSW.precache([
   },
   {
     "url": "service-worker.js",
-    "revision": "0259a676d880961ff2490dc77d4f8079"
+    "revision": "5cabbb710593e88bf87daaa2cfc968d4"
   },
   {
     "url": "src/css/app.css",
@@ -127,7 +163,7 @@ workboxSW.precache([
   },
   {
     "url": "sw-base.js",
-    "revision": "6379f8aaa18309ef947cf0c9a195310e"
+    "revision": "7c36b6c64ff4d3466b24d228396cfe63"
   },
   {
     "url": "sw.js",
